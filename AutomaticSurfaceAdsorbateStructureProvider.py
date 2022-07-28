@@ -36,7 +36,7 @@ class ASAP():
         self.bonding_dist = bonding_dist # the distance of the bonding adsorbent
         self.cutoff = cutoff             # the cutoff threshold for adsorbate atoms to lattice atoms
         self.dope_list = dope_list       # List of subsitution to be made at each adsorbate site (pass an empty array if no subtitutions are desired)
-        self.diatomic = diatomic        # Bondfenstiance for a diatomic bindentate bond, if inlcuded
+        self.diatomic = diatomic         # Bond distance for a diatomic bindentate bond, if inlcuded
     
     def get_neighbors(self):
         nn = []
