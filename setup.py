@@ -7,12 +7,12 @@ setup(
     author_email='sawilso6@asu.edu',
     url='https://github.com/MuhichLab/ASAP',
     packages=find_packages(),
-    python_requires=">=3.8",
    )
 
 
 '''
 add this later
+    python_requires=">=3.8",
     install_requires=[ 
         "sympy",
         "pymatgen>=2022.0.17"
