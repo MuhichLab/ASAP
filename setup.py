@@ -7,5 +7,4 @@ setup(
     author_email='sawilso6@asu.edu',
     url='https://github.com/MuhichLab/ASAP',
     packages=find_packages(),
-    py_modules=['AutomaticSurfaceAdsorbateStructureProvider'],
    )
