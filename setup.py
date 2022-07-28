@@ -6,7 +6,7 @@ setup(
     author='Steven Wilson',
     author_email='sawilso6@asu.edu',
     url='https://github.com/MuhichLab/ASAP',
-    py_modules=['ASAP'],
+    packages=find_packages(),
    )
 
 
