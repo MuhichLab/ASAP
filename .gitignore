@@ -1,4 +1,4 @@
-ASAP/__pycache__/
+__pycache__/
 dist
 ASAP.egg-info
 build
