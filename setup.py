@@ -6,12 +6,13 @@ setup(
     author='Steven Wilson',
     author_email='sawilso6@asu.edu',
     url='https://github.com/MuhichLab/ASAP',
-    packages=find_packages(),
+    packages=[ASAP,],
    )
 
 
 '''
 add this later
+    packages=find_packages(),
     python_requires=">=3.8",
     install_requires=[ 
         "sympy",
