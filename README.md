@@ -7,3 +7,10 @@
 - python v >= 3.8
 - sympy 
 
+# Install
+
+The current version of ASAP can be installed via pip:: 
+
+    pip install ASAPy
+
+Currently this instalation does NOT install the dependencies. Please ensure you have the above dependencies in place.
