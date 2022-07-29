@@ -2,10 +2,10 @@ import time
 start = time.time()
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.analysis.chemenv.coordination_environments.coordination_geometry_finder import LocalGeometryFinder
-import AutomaticSurfaceAdsorbateStructureProvider as ASAP
 import numpy as np
 from pymatgen.core.structure import Structure
 
+from ASAP import AutomaticSurfaceAdsorbateStructureProvider as ASAP
 
 ############# Fuctions for determineing unique CEs ###########################
 
