@@ -20,5 +20,5 @@ Future examples will be presented here. As of now we have a downloadable python 
 	
 	run_asap.py
 
-Please not the accompanying structure files (POSCAR & POSCAR_O2) will also need to be present in the directory that run_asap.py is located. 
+Please note the accompanying structure files (POSCAR & POSCAR_O2) will also need to be present in the directory that run_asap.py is located. 
 
