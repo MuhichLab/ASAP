@@ -1,6 +1,6 @@
 <img src="ASAP_logo.png" align="middle" />
 
-Associated Journal Artcile  -  https://www.sciencedirect.com/science/article/pii/S2210271X22002432
+Associated Journal Article  -  https://www.sciencedirect.com/science/article/pii/S2210271X22002432
 
 # Dependencies
 
