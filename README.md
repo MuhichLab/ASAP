@@ -1,5 +1,7 @@
 <img src="ASAP_logo.png" align="middle" />
 
+Associated Journal Artcile  -  https://www.sciencedirect.com/science/article/pii/S2210271X22002432
+
 # Dependencies
 
 - pymatgen v >= 2022.0.17 : Older versions of pymatgen have not been tested
