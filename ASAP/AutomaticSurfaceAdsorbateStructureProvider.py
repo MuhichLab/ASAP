@@ -121,9 +121,8 @@ class ASAP():
             
             angle1 = np.arccos(np.dot(Vj,cp1)/(np.linalg.norm(Vj)*np.linalg.norm(cp1)))
             angle1 = np.degrees(np.abs(angle1))
-
             newsite = 'bad'
-            if np.abs(angle1) < 10 or np.abs(angle1-180) < 10 :
+            if np.abs(angle1) < 20 or np.abs(angle1-180) < 20 :
                 newsite = 'good'
             Ang = np.zeros((len(vectors),))
             for count,V in enumerate(vectors):
@@ -139,6 +138,7 @@ class ASAP():
                 Vj = factor_adjust*Vj
                 # add back adsorbent site XYZ for cartesien points of adsorbate
                 sites.append(Vj+[X,Y,Z])
+
    
         combos = list(combinations(range(cn),4))
         combos = np.asarray(combos)
@@ -166,9 +166,8 @@ class ASAP():
             
             angle1 = np.degrees(angle1)
             angle2 = np.degrees(angle2)
-
             newsite = 'bad'
-            if (np.abs(angle1) < 10 or np.abs(angle1-180) < 10) and (np.abs(angle2) < 10 or np.abs(angle2-180) < 10) :
+            if (np.abs(angle1) < 10 or np.abs(angle1-180) < 10) and (np.abs(angle2) < 10 or np.abs(angle2-180) < 0) :
                 newsite = 'good'
             
             Ang = np.zeros((len(vectors),))
@@ -187,7 +186,7 @@ class ASAP():
                 Vj = factor_adjust*Vj
                 # add back adsorbent site XYZ for cartesien points of adsorbate
                 sites.append(Vj+[X,Y,Z])
-        
+
         # fast way to find planes but does not capture all posibilties only perfectly square ones
         # max_shape = []
         # makes_plane = []
@@ -204,7 +203,7 @@ class ASAP():
         #             makes_plane.append(y)
        
         ## Lastly check for Planer CEs 4 or greater trigonal planes shoudl already be catpured
-        my_planes = 0
+        has_planes = False
         for x in range(4,cn+1):
             combos = list(combinations(range(cn),x))
             [N,M] = np.shape(combos)
@@ -212,16 +211,16 @@ class ASAP():
             for y in combos:
                 myplane = Plane(Point3D(vectors[y[0]]),Point3D(vectors[y[1]]),Point3D(vectors[y[2]]))
                 new_dist = 0
-                for z in range(4,M):
+
+                for z in range(3,M):
                     new_dist = new_dist + myplane.distance(Point3D(vectors[y[z]]))
                 if new_dist < .001:
                     makes_plane.append(y)
-                np.size(makes_plane)
                 if np.size(makes_plane) > 0:
-                    my_planes = makes_plane
-                    
-                    
-        if np.size(my_planes) > 0:
+                    has_planes = True                    
+                    my_planes = makes_plane       
+        print(has_planes)           
+        if has_planes:
             myplane = Plane(Point3D(vectors[my_planes[0][0]]),
                             Point3D(vectors[my_planes[0][1]]),
                             Point3D(vectors[my_planes[0][2]]))
@@ -237,7 +236,7 @@ class ASAP():
                 sites.append(np.asarray(orthovec)*-1+[X,Y,Z])
             else:
                 sites.append(np.asarray(orthovec)+[X,Y,Z])
-        
+
         SITES = []
         for s in sites:
             SITES.append(PeriodicSite('O',s,self.Adsorbent.lattice,to_unit_cell=True,coords_are_cartesian=True))
