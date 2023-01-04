@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='ASAPy',
-    version='1.0.0',
+    version='1.1.0',
     author='Steven Wilson',
     author_email='sawilso6@asu.edu',
     url='https://github.com/MuhichLab/ASAP',
