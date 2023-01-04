@@ -39,9 +39,12 @@ class ASAP():
         self.diatomic = diatomic         # Bond distance for a diatomic bindentate bond, if inlcuded
     
     def get_neighbors(self):
-        nn = []
-        [nn.append(self.Adsorbent.get_neighbors(self.Adsorbent.sites[x],5.0)) for x in self.Usites]
-        return nn
+        NN = []
+        for x in self.Usites:
+            nn = self.Adsorbent.get_neighbors(self.Adsorbent.sites[x],5.0)
+            nn.sort(key=lambda x: x.nn_distance)
+            NN.append(nn)
+        return NN
     
     def create_all_adsorbates(self):
         spot = 1            
@@ -54,6 +57,13 @@ class ASAP():
                     else:
                         spot = self.get_adsorbate(inserts,non_per,self.Usites[counter],spot)
                     continue
+                elif x == 'S:1':
+                    inserts, non_per = self.S1(self.Usites[counter],NNs[counter],self.CNs[counter])
+                    if self.diatomic:
+                        spot = self.get_bidentate_adsorbate(inserts,non_per,self.Usites[counter],spot)
+                    else:
+                        spot = self.get_adsorbate(inserts,non_per,self.Usites[counter],spot)
+                    continue                
                 else:
                     inserts, non_per = self.New_Sites(self.Usites[counter],NNs[counter],self.CNs[counter])
                     if self.diatomic:
@@ -78,7 +88,7 @@ class ASAP():
         X = self.Adsorbent[usite].x                                                      
         Y = self.Adsorbent[usite].y                                                      
         Z = self.Adsorbent[usite].z                                                  
-        sort_nn = sorted(nn, key=operator.itemgetter(1))                            
+        sort_nn = sorted(nn, key=operator.itemgetter(1)) # redundent from get_neighbors                            
         neighbors = sort_nn[:cn] 
         
         vectors = []
@@ -177,11 +187,62 @@ class ASAP():
                 Vj = factor_adjust*Vj
                 # add back adsorbent site XYZ for cartesien points of adsorbate
                 sites.append(Vj+[X,Y,Z])
+        
+        # fast way to find planes but does not capture all posibilties only perfectly square ones
+        # max_shape = []
+        # makes_plane = []
+        # for x in range(3,cn+1):
+        #     combos = list(combinations(range(cn),x))
+        #     for y in combos:
+        #         print(y)
+        #         is_zero = np.array([0, 0, 0,])
+        #         for z in y:
+        #             is_zero = is_zero + vectors[z]
+        #         print(np.abs(is_zero))
+        #         print((np.abs(is_zero)<.1).all())
+        #         if (np.abs(is_zero)<.1).all():
+        #             makes_plane.append(y)
+       
+        ## Lastly check for Planer CEs 4 or greater trigonal planes shoudl already be catpured
+        my_planes = 0
+        for x in range(4,cn+1):
+            combos = list(combinations(range(cn),x))
+            [N,M] = np.shape(combos)
+            makes_plane = []
+            for y in combos:
+                myplane = Plane(Point3D(vectors[y[0]]),Point3D(vectors[y[1]]),Point3D(vectors[y[2]]))
+                new_dist = 0
+                for z in range(4,M):
+                    new_dist = new_dist + myplane.distance(Point3D(vectors[y[z]]))
+                if new_dist < .001:
+                    makes_plane.append(y)
+                np.size(makes_plane)
+                if np.size(makes_plane) > 0:
+                    my_planes = makes_plane
+                    
+                    
+        if np.size(my_planes) > 0:
+            myplane = Plane(Point3D(vectors[my_planes[0][0]]),
+                            Point3D(vectors[my_planes[0][1]]),
+                            Point3D(vectors[my_planes[0][2]]))
+            #vector orthogonal to plane of CE
+            orthovec = np.double(myplane.normal_vector)
+            factor_adjust = self.bonding_dist/np.linalg.norm(orthovec)
+            orthovec = factor_adjust*orthovec
+            angels = []
+            resite = np.asarray(sites) - [X,Y,Z]
+            for x in resite:
+                angels.append(np.degrees(np.arccos(np.dot(x,orthovec)/(np.linalg.norm(x)*np.linalg.norm(orthovec)))))
+            if (np.asarray(angels) < 90).all():
+                sites.append(np.asarray(orthovec)*-1+[X,Y,Z])
+            else:
+                sites.append(np.asarray(orthovec)+[X,Y,Z])
+        
         SITES = []
         for s in sites:
             SITES.append(PeriodicSite('O',s,self.Adsorbent.lattice,to_unit_cell=True,coords_are_cartesian=True))
         inserts = SITES
-        non_per = sites                
+        non_per = sites              
         return inserts, non_per
 
     def L2_A2(self,usite,nn,cn):
@@ -191,7 +252,7 @@ class ASAP():
         X = self.Adsorbent[usite].x                                                      
         Y = self.Adsorbent[usite].y                                                      
         Z = self.Adsorbent[usite].z                                                 
-        sort_nn = sorted(nn, key=operator.itemgetter(1))                            
+        sort_nn = sorted(nn, key=operator.itemgetter(1)) # redundent from get_neighbors                           
         neighbors = sort_nn[:cn]
         vectors = []
         for f in range(cn):        
@@ -214,11 +275,11 @@ class ASAP():
             for x in val:                                                     
                 axis.append(pln_ap.subs(t,x))
             axis = np.asarray(axis,dtype=float)
-            for y in axis:
-                factor_adjust = self.bonding_dist/np.linalg.norm(y)
-                Vj = factor_adjust*y
-                # add back adsorbent site XYZ for cartesien points of adsorbate
-                sites.append(Vj+[X,Y,Z])
+            #for y in axis:
+            factor_adjust = self.bonding_dist/np.linalg.norm(axis)
+            Vj = factor_adjust*axis
+            # add back adsorbent site XYZ for cartesien points of adsorbate
+            sites.append(Vj+[X,Y,Z])
             SITES = []
             for s in sites:
                 SITES.append(PeriodicSite('O',s,self.Adsorbent.lattice,to_unit_cell=True,coords_are_cartesian=True))
@@ -242,16 +303,44 @@ class ASAP():
                 zo = (ax1[2] + ax2[2])/2
                 axis.append([xo,yo,zo])
             axis = np.asarray(ax2,dtype=float)
-            for y in axis:  
-                factor_adjust = self.bonding_dist/np.linalg.norm(y)
-                Vj = factor_adjust*y
-                # add back adsorbent site XYZ for cartesien points of adsorbate
-                sites.append(Vj+[X,Y,Z])
+            #for y in axis:  
+            factor_adjust = self.bonding_dist/np.linalg.norm(axis)
+            Vj = factor_adjust*axis
+            # add back adsorbent site XYZ for cartesien points of adsorbate
+            sites.append(Vj+[X,Y,Z])
             SITES = []
             for s in sites:
                 SITES.append(PeriodicSite('O',s,self.Adsorbent.lattice,to_unit_cell=True,coords_are_cartesian=True))
             inserts = SITES
             non_per = sites
+        return inserts, non_per
+    
+    def S1(self,usite,nn,cn):
+        # Single Neighbor Bond Cn must == 1 
+        
+        X = self.Adsorbent[usite].x
+        Y = self.Adsorbent[usite].y
+        Z = self.Adsorbent[usite].z
+        sort_nn = sorted(nn, key=operator.itemgetter(1))
+        neighbors = sort_nn[:cn]
+        vectors = []
+        for f in range(cn):
+            coords = neighbors[f][0].coords
+            V = coords - [X,Y,Z]
+            vectors.append(V)
+        vectors = np.asarray(vectors)
+        sites = []
+        axis = -vectors # the bonding vecor is inline with the adsorbent neighbor vector
+        for y in axis:
+            factor_adjust = self.bonding_dist/np.linalg.norm(y)
+            Vj = factor_adjust*y
+            # add back adsorbent site XYZ for cartesien points of adsorbate
+            sites.append(Vj+[X,Y,Z])
+        SITES = []
+        for s in sites:
+            SITES.append(PeriodicSite('O',s,self.Adsorbent.lattice,to_unit_cell=True,coords_are_cartesian=True))
+        inserts = SITES
+        non_per = sites
         return inserts, non_per
         
     def make_pln(self,usite,vec):
@@ -341,7 +430,7 @@ class ASAP():
         new_non_per = [x for x in non_per if x not in np.asarray(remove_non_per)]
         sorb_vecs,adsorbate_types = self.adsorbate_vectors()
         if len(sorb_vecs) > 1:                               
-            for counter,site in enumerate(new_inserts): # enumerte is used so .remove can be used
+            for counter,site in enumerate(new_non_per): # enumerte is used so .remove can be used
                 non_p_site = new_non_per[counter]                                                                                       
                 pie = math.pi                                                       
                 val = [0, pie/4, pie/2, pie*3/4, pie, -pie/4, -pie/2, -pie*3/4]#,-pie]               
@@ -388,7 +477,7 @@ class ASAP():
                                 dist = tot
                 # # check one more time to ensure adsrobate is not sitting too cloase to any oher atoms
                 final_check = self.shortest_dist_from_lattice(best_sites) 
-                if final_check > 0.5:
+                if final_check >= self.cutoff:
                     for x in best_sites:                                                  
                         self.Adsorbent.append(x.species_string,x.coords,coords_are_cartesian=True)
                         pos = Poscar(self.Adsorbent)                                             
@@ -403,7 +492,63 @@ class ASAP():
             if len(self.dope_list) > 0:
         	    self.dope_me(usite,start_spot,'_{}_no_O2'.format(int(spot)-1)) #creates doped usite with no O2
         elif len(sorb_vecs) == 1:
-            for x in new_inserts:                                                  
+            ## need to rottae single atom work in progress
+            # for counter,site in enumerate(new_inserts): # enumerte is used so .remove can be used
+            #     non_p_site = new_non_per[counter]                                                                                       
+            #     pie = math.pi                                                       
+            #     val = [0, pie/4, pie/2, pie*3/4, pie, -pie/4, -pie/2, -pie*3/4]#,-pie]               
+            #     vec = non_p_site - self.Adsorbent[usite].coords                          
+            #     pln_ap = self.make_pln(usite,vec)                              
+            #     axis = []                                                           
+            #     for x in val:                                                       
+            #         axis.append(self.arbitraty_axis(pln_ap, x, vec, usite))
+            #     dist = 0  
+            #     rot_angles = np.asarray(np.linspace(0,360,9,dtype='int'))
+            #     np.delete(rot_angles,-1) # dont need 360 degree rotations
+            #     for arb_rot in rot_angles: 
+            #         for x in axis:
+            #             atom_spots = []
+            #             # the new adsorbate site 
+            #             rotate_mx2 = self.rotation_matrix(x, np.radians(arb_rot))
+            #             first_rot = np.dot(rotate_mx2,vec)
+            #             atom_spots.append(np.dot(rotate_mx2,first_rot))
+            #             period_sites = []
+            #             for count,new in enumerate(atom_spots):
+            #                 atom = np.array(new, dtype=np.float64) + self.Adsorbent[usite].coords
+            #                 ATOM = PeriodicSite(adsorbate_types[count],atom,self.Adsorbent.lattice,to_unit_cell=True,coords_are_cartesian=True)
+            #                 period_sites.append(ATOM)
+            #             ##################################################    
+            #             # # Strickly for visualizing all rotation of adsorbate tested
+            #             # for g in period_sites:                                                  
+            #             #     self.Adsorbent.append(g.species_string,g.coords,coords_are_cartesian=True)
+            #             # pos = Poscar(self.Adsorbent)                                               
+            #             # pos.write_file('POSCAR_{}_Site_{}_{}_{}_{}'.format(self.Adsorbent[usite].species_string,spot,arb_rot,angle,count10))
+            #             # count10 += 1
+            #             # for h in period_sites: # just usign x as a counter 
+            #             #     self.Adsorbent.remove(self.Adsorbent.sites[-1]) 
+            #             ##################################################
+            #             tot = self.dist_from_lattice(period_sites) 
+            #             if (tot > dist):                                                
+            #                 best_sites = period_sites                                                                           
+            #                 dist = tot
+            #     # # check one more time to ensure adsrobate is not sitting too cloase to any oher atoms
+            #     final_check = self.shortest_dist_from_lattice(best_sites) 
+            #     if final_check > 0.5:
+            #         for x in best_sites:                                                  
+            #             self.Adsorbent.append(x.species_string,x.coords,coords_are_cartesian=True)
+            #             pos = Poscar(self.Adsorbent)                                             
+            #             pos.write_file('{}_{}_Site_{}'.format('POSCAR',self.Adsorbent[usite].species_string,spot))
+            #             if len(self.dope_list) > 0:
+            #                 self.dope_me(usite,spot,'') # Create same site but doped      
+            #         for x in best_sites: # just usign x as a counter 
+            #             self.Adsorbent.remove(self.Adsorbent.sites[-1])                                                            
+            #     else:
+            #         pass   
+            #     spot = spot + 1                                               
+            # if len(self.dope_list) > 0:
+        	   #  self.dope_me(usite,start_spot,'_{}_no_O2'.format(int(spot)-1)) #creates doped usite with no O2
+                
+            for x in new_inserts:  
                 self.Adsorbent.append(adsorbate_types[0],x.coords,coords_are_cartesian=True)
                 pos = Poscar(self.Adsorbent)                                             
                 pos.write_file('{}_{}_Site_{}'.format('POSCAR',self.Adsorbent[usite].species_string,spot))  
@@ -421,7 +566,7 @@ class ASAP():
         remove_non_per = []
         for counter,site in enumerate(inserts):
             for K,y in enumerate(self.Adsorbent):                                                 
-                if (K != usite) and (site.distance(y) < self.cutoff): # 2.4 is a cutoff 
+                if (K != usite) and (site.distance(y) < self.cutoff): #  
                     remove.append(site)
                     remove_non_per.append(non_per[counter])
                     break
@@ -472,7 +617,7 @@ class ASAP():
                         dist = tot
                 ## check one more time to ensure adsrobate is not sitting too cloase to any oher atoms
                 final_check = self.shortest_dist_from_lattice(best_sites) 
-                if final_check > 0.5:
+                if final_check > self.cutoff:
                     for x in best_sites:                                                  
                         self.Adsorbent.append(x.species_string,x.coords,coords_are_cartesian=True)
                         pos = Poscar(self.Adsorbent)                                             
