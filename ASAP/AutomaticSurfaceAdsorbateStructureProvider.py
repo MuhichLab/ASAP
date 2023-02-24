@@ -126,7 +126,7 @@ class ASAP():
                 newsite = 'good'
             Ang = np.zeros((len(vectors),))
             for count,V in enumerate(vectors):
-                Ang[count] = np.degrees(np.arccos(np.dot(Vj,V)/(np.linalg.norm(Vj)*np.linalg.norm(V))))
+                Ang[count] = np.degrees(np.arccos(np.round(np.dot(Vj,V)/(np.linalg.norm(Vj)*np.linalg.norm(V)),8)))
             # For large cn CEs the diff in angles can be <10 and still be a wrong Vj
             if (Ang <= 8).any():
                 newsite =' bad'
@@ -138,8 +138,6 @@ class ASAP():
                 Vj = factor_adjust*Vj
                 # add back adsorbent site XYZ for cartesien points of adsorbate
                 sites.append(Vj+[X,Y,Z])
-
-   
         combos = list(combinations(range(cn),4))
         combos = np.asarray(combos)
         for c in combos:
@@ -172,7 +170,7 @@ class ASAP():
             
             Ang = np.zeros((len(vectors),))
             for count,V in enumerate(vectors):
-                Ang[count] = np.degrees(np.arccos(np.dot(Vj,V)/(np.linalg.norm(Vj)*np.linalg.norm(V))))
+                Ang[count] = np.degrees(np.round(np.arccos(np.dot(Vj,V)/(np.linalg.norm(Vj)*np.linalg.norm(V))),8))
             # For large cn CEs the diff in angles can be < 10 and still be a wrong Vj
             # Thus we impose a check to ensure that Vj is not close to any vector
             # inline with a NN 
@@ -218,8 +216,9 @@ class ASAP():
                     makes_plane.append(y)
                 if np.size(makes_plane) > 0:
                     has_planes = True                    
-                    my_planes = makes_plane       
-        print(has_planes)           
+                    my_planes = makes_plane 
+
+        #print(has_planes)           
         if has_planes:
             myplane = Plane(Point3D(vectors[my_planes[0][0]]),
                             Point3D(vectors[my_planes[0][1]]),
@@ -236,7 +235,7 @@ class ASAP():
                 sites.append(np.asarray(orthovec)*-1+[X,Y,Z])
             else:
                 sites.append(np.asarray(orthovec)+[X,Y,Z])
-
+        
         SITES = []
         for s in sites:
             SITES.append(PeriodicSite('O',s,self.Adsorbent.lattice,to_unit_cell=True,coords_are_cartesian=True))
@@ -415,18 +414,32 @@ class ASAP():
         return dist 
     
     
-    def get_adsorbate(self,inserts,non_per,usite,spot):                       
+    def get_adsorbate(self,inserts,non_per,usite,spot):  
+                  
         start_spot = spot  
         remove = []  
         remove_non_per = []
         for counter,site in enumerate(inserts):
-            for K,y in enumerate(self.Adsorbent):                                                   
+            for K,y in enumerate(self.Adsorbent):                                            
                 if (K != usite) and (site.distance(y) < self.cutoff): # 2.4 is a cutoff 
                     remove.append(site)
                     remove_non_per.append(non_per[counter])
                     break
+          
         new_inserts = [x for x in inserts if x not in remove]
-        new_non_per = [x for x in non_per if x not in np.asarray(remove_non_per)]
+        new_non_per = []
+        for y in non_per:
+            check = True
+            for z in remove_non_per:
+                if (z==y).all():
+                    check = False
+                    break
+            if check:
+                new_non_per.append(y)
+                
+        # This method below does not work for 2D lists        
+        # new_non_per = [x for x in non_per if x not in (remove_non_per).ant()]
+        
         sorb_vecs,adsorbate_types = self.adsorbate_vectors()
         if len(sorb_vecs) > 1:                               
             for counter,site in enumerate(new_non_per): # enumerte is used so .remove can be used

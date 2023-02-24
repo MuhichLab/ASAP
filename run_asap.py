@@ -39,12 +39,12 @@ def envi(usites,structure,only_cations):
 ############# Variables used by  ASAP and SpaceGroupAnalyzer #################
  
 # Make Adjustements here based on desired structure
-cutoff = 0.5        # the cutoff threshold for adsorbate atoms to lattice atoms
+cutoff = 1.8       # the cutoff threshold for adsorbate atoms to lattice atoms
 bonding_dist = 2.0  # the distance of the bonding adsorbent
 bonding_atom = 1    # the atom in the adsorbate that is bonding
 dope_list = []      # List of subsitution to be made at each adsorbate site (pass an empty array if no subtitutions are desired)
-Struc = Structure.from_file('POSCAR')  # Adsorbent pymatgen structure file
-Ads = Structure.from_file('POSCAR_O2') # Adsorbate pymatgen structure file
+Struc = Structure.from_file('POSCAR_CrOx_slab')  # Adsorbent pymatgen structure file
+Ads = Structure.from_file('POSCAR_Cl2') # Adsorbate pymatgen structure file
 
 # If the adsorbate is diatomic and you desire a bindentate bond formation:
 # set the diatomic atoms bond distance here, set to "None" if not desired
@@ -68,9 +68,9 @@ ce_list , usites , cns = envi(usites,Struc,only_cations=True)
 # # They are listed in the SI of https://doi.org/10.1021/acs.chemmater.7b02766
 # # Or can be printer with `finder.allcg.get_geometry_from_IUPAC_symbol`
 
-# usites = [0,12]  # Python is a 0 based code meaning Atom 1 is actually Atom 0
-# ce_list = ['T:4', 'O:6'] 
-# cns = [4,6]
+# usites = [57]  # Python is a 0 based code meaning Atom 1 is actually Atom 0
+# ce_list = ['TC:9'] 
+# cns = [9]
 
 ##############################################################################
 
